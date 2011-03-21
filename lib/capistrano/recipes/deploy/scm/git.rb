@@ -154,10 +154,26 @@ module Capistrano
           execute.join(" && ")
         end
         
-        # An expensive export. Performs a checkout as above, then
-        # removes the repo.
+        # use git archive to export repository 
         def export(revision, destination)
-          checkout(revision, destination) << " && rm -Rf #{destination}/.git"
+          git    = command 
+          execute = [] 
+          args = [] 
+          
+          args << '--format=tar' 
+          args << "--remote=#{configuration[:repository]}" 
+          if project = configuration[:project] 
+            args << "#{revision}:#{project}" 
+          else 
+            args << revision 
+          end 
+          
+          # export (using git archive) 
+          execute << "mkdir -p #{destination}" 
+          execute << "cd #{destination}" 
+          execute << "#{git} archive #{args.join(' ')} | tar xf -" 
+          
+          execute.join(" && ") 
         end
 
         # Merges the changes to 'head' since the last fetch, for remote_cache
